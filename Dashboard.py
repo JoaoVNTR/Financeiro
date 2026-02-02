@@ -33,7 +33,7 @@ st.markdown("""
         font-weight: bold !important;
     }
     h1 {
-        color: #1f77b4;
+        color: #E9E9E9;
         padding-bottom: 20px;
     }
     h2 {
@@ -41,7 +41,7 @@ st.markdown("""
         padding-top: 20px;
     }
     .filtro-container {
-        background-color: ##FFB549;
+        background-color: #E9E9E9;
         padding: 20px;
         border-radius: 10px;
         margin-bottom: 20px;
