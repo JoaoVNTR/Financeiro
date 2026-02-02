@@ -139,4 +139,3 @@ with col3:
     margem = (total_rec / total * 100) if total > 0 else 0
     st.metric("📊 Margem Geral", f"{margem:.2f}%")
 
-st

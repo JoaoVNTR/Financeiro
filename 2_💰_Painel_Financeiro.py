@@ -36,9 +36,7 @@ with col3:
     margem_media = (receita_gestao / faturamento_total * 100) if faturamento_total > 0 else 0
     st.metric("📊 Margem Média", f"{margem_media:.2f}%")
 
-with col4:
-    valor_medio_transacao = df['Valor a Pagar para Gerador (R$)'].mean()
-    st.metric("💳 Valor Médio/Transação", f"R$ {valor_medio_transacao:,.2f}")
+
 
 st.markdown("---")
 

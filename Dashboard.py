@@ -19,7 +19,7 @@ st.markdown("""
         padding: 0rem 1rem;
     }
     .stMetric {
-        background-color: #00000;
+        background-color: #f0f2f6;
         padding: 15px;
         border-radius: 10px;
         box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
@@ -33,7 +33,7 @@ st.markdown("""
         font-weight: bold !important;
     }
     h1 {
-        color: #E9E9E9;
+        color: #1f77b4;
         padding-bottom: 20px;
     }
     h2 {
@@ -41,7 +41,7 @@ st.markdown("""
         padding-top: 20px;
     }
     .filtro-container {
-        background-color: #E9E9E9;
+        background-color: #f8f9fa;
         padding: 20px;
         border-radius: 10px;
         margin-bottom: 20px;
@@ -106,7 +106,7 @@ if 'df_original' not in st.session_state:
     st.session_state['df_original'] = df
 
 # Título Principal
-st.title("⚡ Dashboard Executivo - Geração Distribuída")
+st.title("⚡ Dashboard Executivo - Faturamento")
 st.markdown("---")
 
 # Sidebar com filtros
