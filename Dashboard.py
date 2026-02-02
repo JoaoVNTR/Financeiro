@@ -111,7 +111,6 @@ st.markdown("---")
 
 # Sidebar com filtros
 with st.sidebar:
-    st.image("https://via.placeholder.com/250x80/1f77b4/ffffff?text=GD+Analytics", use_container_width=True)
     st.markdown("## 🎛️ Filtros Interativos")
     st.markdown("---")
     
