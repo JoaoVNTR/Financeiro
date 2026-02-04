@@ -117,36 +117,66 @@ with col_l:
     fig.add_bar(
         x=evolucao['Mês de Competência'],
         y=evolucao['Valor a Pagar para Gerador (R$)'],
-        name="Faturamento"
+        name="Faturamento",
+        marker_color="#071D49"
     )
     fig.add_scatter(
         x=evolucao['Mês de Competência'],
         y=evolucao['Valor da Gestão (R$)'],
         name="Receita Gestão",
-        secondary_y=True
+        secondary_y=True,
+        line=dict(color="green")
     )
 
     fig.update_layout(height=400, template="plotly_white", hovermode="x unified")
     st.plotly_chart(fig, use_container_width=True)
 
 with col_r:
-    st.markdown("#### 🏭 Top 5 Geradores")
+    st.markdown("#### 🏭 Top 5 Geradores por Faturamento")
 
     top = (
         df.groupby('Gerador')['Valor a Pagar para Gerador (R$)']
         .sum()
-        .sort_values(ascending=False)
-        .head(5)
+        .sort_values(ascending=True)
+        .tail(5)
     )
 
-    fig_top = px.bar(
-        x=top.values,
-        y=top.index,
-        orientation='h',
-        labels={'x': 'Faturamento (R$)', 'y': 'Gerador'}
+    max_valor = top.max() * 1.15  # folga no eixo X
+
+    fig_top = go.Figure()
+
+    fig_top.add_bar(
+    x=top.values,
+    y=top.index,
+    orientation='h',
+    text=[f"R$ {v:,.2f}" for v in top.values],
+    textposition='outside',
+    cliponaxis=False,
+    marker=dict(color="#1f77b4"),
+    hovertemplate="<b>%{y}</b><br>Faturamento: R$ %{x:,.2f}<extra></extra>"
+)
+
+
+    fig_top.update_layout(
+        height=400,
+        template="plotly_white",
+        margin=dict(l=20, r=20, t=40, b=20),
+        xaxis=dict(
+            title="Faturamento (R$)",
+            range=[0, max_valor],
+            showgrid=False,
+            tickprefix="R$ ",
+            tickformat=",.0f"
+        ),
+        yaxis=dict(
+            title="",
+            showgrid=False
+        )
     )
 
     st.plotly_chart(fig_top, use_container_width=True)
+
+
 
 st.markdown("---")
 
@@ -167,5 +197,12 @@ resumo['Margem %'] = (
     resumo['Valor da Gestão (R$)'] /
     resumo['Valor a Pagar para Gerador (R$)'] * 100
 ).round(2)
+
+# Formatação em R$ (padrão brasileiro)
+resumo['Valor a Pagar para Gerador (R$)'] = resumo['Valor a Pagar para Gerador (R$)'] \
+    .map(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
+resumo['Valor da Gestão (R$)'] = resumo['Valor da Gestão (R$)'] \
+    .map(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
 
 st.dataframe(resumo, use_container_width=True, height=320)
