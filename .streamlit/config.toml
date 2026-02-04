@@ -1,0 +1,6 @@
+[theme]
+primaryColor="#0A2E6D"             # Azul escuro (cor principal)
+backgroundColor="#FFFFFF"          # Fundo branco
+secondaryBackgroundColor="#F5F5F5" # Fundo secundário (cinza claro)
+textColor="#000000"                # Texto em preto
+font="sans serif"
