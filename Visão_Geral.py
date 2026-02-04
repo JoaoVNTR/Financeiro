@@ -237,46 +237,111 @@ st.markdown("---")
 # Gráficos Principais
 st.markdown("## 📊 Análise Visual")
 
-# Evolução Mensal
+# =========================
+# Evolução Mensal - Estável e Profissional
+# =========================
+
 st.markdown("### 📈 Evolução do Faturamento Mensal")
 
-evolucao_mensal = df_filtrado.groupby('Mês de Competência').agg({
-    'Valor a Pagar para Gerador (R$)': 'sum',
-    'Valor da Gestão (R$)': 'sum'
-}).reset_index()
+evolucao_mensal = (
+    df_filtrado
+    .groupby('Mês de Competência', as_index=False)
+    .agg({
+        'Valor a Pagar para Gerador (R$)': 'sum',
+        'Valor da Gestão (R$)': 'sum'
+    })
+    .sort_values('Mês de Competência')
+)
+
+# Garantia de índices corretos
+evolucao_mensal = evolucao_mensal.reset_index(drop=True)
+
+# Cálculos executivos
+melhor_idx = evolucao_mensal['Valor a Pagar para Gerador (R$)'].idxmax()
+pior_idx = evolucao_mensal['Valor a Pagar para Gerador (R$)'].idxmin()
+
+melhor_mes = evolucao_mensal.loc[melhor_idx]
+pior_mes = evolucao_mensal.loc[pior_idx]
+
+crescimento = (
+    (evolucao_mensal.iloc[-1]['Valor a Pagar para Gerador (R$)'] /
+     evolucao_mensal.iloc[0]['Valor a Pagar para Gerador (R$)'] - 1) * 100
+    if len(evolucao_mensal) > 1 else 0
+)
 
 fig_evolucao = go.Figure()
 
+# Faturamento Total (Área)
 fig_evolucao.add_trace(go.Scatter(
     x=evolucao_mensal['Mês de Competência'],
     y=evolucao_mensal['Valor a Pagar para Gerador (R$)'],
     mode='lines+markers',
     name='Faturamento Total',
-    line=dict(color='#1f77b4', width=3),
-    marker=dict(size=10),
-    hovertemplate='<b>%{x}</b><br>Faturamento: R$ %{y:,.2f}<extra></extra>'
+    fill='tozeroy',
+    hovertemplate=
+        '<b>%{x}</b><br>'
+        'Faturamento: R$ %{y:,.2f}<extra></extra>'
 ))
 
+# Receita de Gestão (Eixo secundário)
 fig_evolucao.add_trace(go.Scatter(
     x=evolucao_mensal['Mês de Competência'],
     y=evolucao_mensal['Valor da Gestão (R$)'],
     mode='lines+markers',
     name='Receita de Gestão',
-    line=dict(color='#ff7f0e', width=3),
-    marker=dict(size=10),
-    hovertemplate='<b>%{x}</b><br>Receita Gestão: R$ %{y:,.2f}<extra></extra>'
+    yaxis='y2',
+    line=dict(dash='dash'),
+    hovertemplate=
+        '<b>%{x}</b><br>'
+        'Receita Gestão: R$ %{y:,.2f}<extra></extra>'
 ))
 
 fig_evolucao.update_layout(
-    height=400,
+    height=450,
+    template='plotly_white',
     hovermode='x unified',
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-    xaxis_title="Mês de Competência",
-    yaxis_title="Valor (R$)",
-    template="plotly_white"
+    legend=dict(
+        orientation='h',
+        y=1.08,
+        x=1,
+        xanchor='right'
+    ),
+    yaxis=dict(title='Faturamento (R$)'),
+    yaxis2=dict(
+        title='Receita de Gestão (R$)',
+        overlaying='y',
+        side='right',
+        showgrid=False
+    ),
+    margin=dict(t=80)
+)
+
+# Anotações
+fig_evolucao.add_annotation(
+    x=melhor_mes['Mês de Competência'],
+    y=melhor_mes['Valor a Pagar para Gerador (R$)'],
+    text='📈 Melhor mês',
+    showarrow=True
+)
+
+fig_evolucao.add_annotation(
+    x=pior_mes['Mês de Competência'],
+    y=pior_mes['Valor a Pagar para Gerador (R$)'],
+    text='📉 Pior mês',
+    showarrow=True
+)
+
+fig_evolucao.add_annotation(
+    xref='paper',
+    yref='paper',
+    x=0,
+    y=-0.25,
+    showarrow=False,
+    text=f'<b>Crescimento no período:</b> {crescimento:.1f}%'
 )
 
 st.plotly_chart(fig_evolucao, use_container_width=True)
+
 
 # Análise por Gerador
 col1, col2 = st.columns(2)
