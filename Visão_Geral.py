@@ -4,6 +4,13 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
 
+def real_br(valor):
+    try:
+        return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    except:
+        return "R$ 0,00"
+
+
 # Configuração da página
 st.set_page_config(
     page_title="Dashboard GD - Faturamento",
@@ -185,7 +192,7 @@ with col1:
     faturamento_total = df_filtrado['Valor a Pagar para Gerador (R$)'].sum()
     st.metric(
         label="💰 Faturamento Total",
-        value=f"R$ {faturamento_total:,.2f}",
+        value=real_br(faturamento_total),
         delta=f"{len(df_filtrado)} registros"
     )
 
@@ -193,7 +200,7 @@ with col2:
     receita_gestao = df_filtrado['Valor da Gestão (R$)'].sum()
     st.metric(
         label="💵 Receita de Gestão",
-        value=f"R$ {receita_gestao:,.2f}",
+        value=real_br(receita_gestao),
         delta=f"{(receita_gestao/faturamento_total*100) if faturamento_total > 0 else 0:.1f}% do faturamento"
     )
 
@@ -211,7 +218,7 @@ with col4:
     ticket_medio = faturamento_total / total_clientes if total_clientes > 0 else 0
     st.metric(
         label="🎯 Ticket Médio por Cliente",
-        value=f"R$ {ticket_medio:,.2f}",
+        value=real_br(ticket_medio),
         delta="Por cliente final"
     )
 
@@ -220,7 +227,7 @@ with col5:
     receita_media_usina = faturamento_total / total_usinas if total_usinas > 0 else 0
     st.metric(
         label="⚡ Receita Média por Usina",
-        value=f"R$ {receita_media_usina:,.2f}",
+        value=real_br(receita_media_usina),
         delta=f"{total_usinas} usinas ativas"
     )
 
@@ -395,7 +402,7 @@ st.info("""
 📌 **Navegue pelas páginas do dashboard:**
 - **📊 Painel Executivo** (Página atual): Visão geral consolidada
 - **💰 Painel Financeiro**: Análise detalhada de receitas e margens
-- **⚡ Painel Operacional**: Performance por usina e gerador
+- **⚡ Relatório Repasse**: Análise de Repasses aos Geradores
 - **📋 Relatório Detalhado**: Tabela completa com drill-down
 
 Use os filtros na barra lateral para refinar sua análise!
