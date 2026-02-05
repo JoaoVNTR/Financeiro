@@ -4,6 +4,15 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+# ===============================
+# Função de formatação em Real (R$)
+# ===============================
+def real_br(valor):
+    try:
+        return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    except:
+        return "R$ 0,00"
+
 # ======================================================
 # Configuração
 # ======================================================
@@ -86,10 +95,11 @@ margem_media = (receita_gestao / faturamento_total * 100) if faturamento_total e
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.metric("💰 Faturamento Bruto", f"R$ {faturamento_total:,.2f}")
+    st.metric("💰 Faturamento Bruto", real_br(faturamento_total))
+
 
 with col2:
-    st.metric("💵 Receita Gestão", f"R$ {receita_gestao:,.2f}")
+    st.metric("💵 Receita Gestão", real_br(receita_gestao))
 
 with col3:
     st.metric("📊 Margem Média", f"{margem_media:.2f}%")
@@ -239,7 +249,19 @@ resumo["Margem %"] = (
     resumo["Valor a Pagar para Gerador (R$)"] * 100
 ).round(2)
 
-st.dataframe(resumo, use_container_width=True, height=400)
+colunas_reais = [
+    "Valor a Pagar para Gerador (R$)",
+    "Valor da Gestão (R$)"
+]
+
+resumo_styled = resumo.style.format({
+    col: real_br
+    for col in colunas_reais
+    if col in resumo.columns
+})
+
+st.dataframe(resumo_styled, use_container_width=True, height=400)
+
 
 st.download_button(
     "📥 Download Resumo Financeiro (CSV)",

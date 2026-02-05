@@ -2,6 +2,15 @@ import streamlit as st
 import pandas as pd
 
 # ======================================================
+# Função de formatação em Real (R$)
+# ======================================================
+def real_br(valor):
+    try:
+        return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    except:
+        return "R$ 0,00"
+
+# ======================================================
 # Configuração
 # ======================================================
 st.set_page_config(
@@ -92,11 +101,11 @@ with col1:
 
 with col2:
     total_fat = df["Valor a Pagar para Gerador (R$)"].sum()
-    st.metric("💰 Faturamento", f"R$ {total_fat:,.2f}")
+    st.metric("💰 Faturamento", real_br(total_fat))
 
 with col3:
     total_rec = df["Valor da Gestão (R$)"].sum()
-    st.metric("💵 Receita Gestão", f"R$ {total_rec:,.2f}")
+    st.metric("💵 Receita Gestão", real_br(total_rec))
 
 with col4:
     st.metric("🏭 Geradores", df["Gerador"].nunique())
@@ -198,12 +207,26 @@ if ordenar_por in df_display.columns:
         ordenar_por,
         ascending=ordem_crescente
     )
+def formato_real(valor):
+    return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 # ======================================================
 # 8️⃣ Exibição da tabela
 # ======================================================
 st.markdown(f"### 📊 Visualização — {nivel}")
-st.dataframe(df_display, use_container_width=True, height=500)
+colunas_reais = [
+    "Valor a Pagar para Gerador (R$)",
+    "Valor da Gestão (R$)"
+]
+
+df_styled = df_display.style.format({
+    col: formato_real
+    for col in colunas_reais
+    if col in df_display.columns
+})
+
+st.dataframe(df_styled, use_container_width=True, height=500)
+
 
 # ======================================================
 # 9️⃣ Estatísticas do recorte atual
@@ -222,10 +245,10 @@ total_rec = df_display.filter(
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.metric("💰 Total Faturamento", f"R$ {total_fat:,.2f}")
+    st.metric("💰 Total Faturamento", real_br(total_fat))
 
 with col2:
-    st.metric("💵 Total Receita", f"R$ {total_rec:,.2f}")
+    st.metric("💵 Total Receita", real_br(total_rec))
 
 with col3:
     margem = (total_rec / total_fat * 100) if total_fat else 0

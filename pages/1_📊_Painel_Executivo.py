@@ -4,6 +4,15 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
+# ===============================
+# Função de formatação em Real (R$)
+# ===============================
+def real_br(valor):
+    try:
+        return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    except:
+        return "R$ 0,00"
+
 st.set_page_config(
     page_title="Painel Executivo",
     page_icon="📊",
@@ -85,19 +94,19 @@ total_clientes = df['Cliente Final'].nunique()
 total_usinas = df['Usina'].nunique()
 
 with col1:
-    st.metric("💰 Faturamento Total", f"R$ {faturamento_total:,.2f}")
+    st.metric("💰 Faturamento Total", real_br(faturamento_total))
 
 with col2:
     margem = (receita_gestao / faturamento_total * 100) if faturamento_total else 0
-    st.metric("💵 Receita Gestão", f"R$ {receita_gestao:,.2f}", f"{margem:.1f}%")
+    st.metric("💵 Receita Gestão", real_br(receita_gestao), f"{margem:.1f}%")
 
 with col3:
     st.metric("👥 Clientes", total_clientes, f"{total_usinas} usinas")
 
 with col4:
     ticket = faturamento_total / total_clientes if total_clientes else 0
-    st.metric("🎯 Ticket Médio", f"R$ {ticket:,.2f}")
-
+    st.metric("🎯 Ticket Médio", real_br(ticket))
+    
 st.markdown("---")
 
 # ===============================
