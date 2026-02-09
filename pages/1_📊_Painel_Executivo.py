@@ -114,23 +114,54 @@ st.markdown("---")
 # ===============================
 col_l, col_r = st.columns(2)
 
+# ===============================
+# MAPA DE MESES (ordem cronológica)
+# ===============================
+mapa_meses = {
+    "janeiro": 1,
+    "fevereiro": 2,
+    "março": 3,
+    "abril": 4,
+    "maio": 5,
+    "junho": 6,
+    "julho": 7,
+    "agosto": 8,
+    "setembro": 9,
+    "outubro": 10,
+    "novembro": 11,
+    "dezembro": 12
+}
+
+
 with col_l:
     st.markdown("#### 📈 Evolução Mensal")
 
-    evolucao = df.groupby('Mês de Competência').agg({
-        'Valor a Pagar para Gerador (R$)': 'sum',
-        'Valor da Gestão (R$)': 'sum'
-    }).reset_index()
+    evolucao = (
+    df
+    .assign(
+        mes_num=lambda x: x["Mês de Competência"].str.lower().map(mapa_meses),
+        data_ordem=lambda x: pd.to_datetime(
+            x["Ano"].astype(str) + "-" + x["mes_num"].astype(str) + "-01"
+        )
+    )
+    .groupby(["Mês de Competência", "Ano", "data_ordem"], as_index=False)
+    .agg({
+        "Valor a Pagar para Gerador (R$)": "sum",
+        "Valor da Gestão (R$)": "sum"
+    })
+    .sort_values("data_ordem")
+)
+
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
     fig.add_bar(
-        x=evolucao['Mês de Competência'],
+        x=evolucao["Mês de Competência"] + "/" + evolucao["Ano"].astype(str),
         y=evolucao['Valor a Pagar para Gerador (R$)'],
         name="Faturamento",
         marker_color="#071D49"
     )
     fig.add_scatter(
-        x=evolucao['Mês de Competência'],
+        x=evolucao["Mês de Competência"] + "/" + evolucao["Ano"].astype(str),
         y=evolucao['Valor da Gestão (R$)'],
         name="Receita Gestão",
         secondary_y=True,
