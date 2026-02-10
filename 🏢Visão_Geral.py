@@ -74,8 +74,18 @@ def carregar_dados():
         # Preencher valores nulos
         df.fillna(0, inplace=True)
         
-        # Garantir que Mês de Competência seja string
-        df['Mês de Competência'] = df['Mês de Competência'].astype(str)
+        # Converter Mês de Competência para datetime
+        df['Mês de Competência'] = pd.to_datetime(
+        df['Mês de Competência'],
+        errors='coerce'
+)
+        # Criar colunas auxiliares
+        df['Ano'] = df['Mês de Competência'].dt.year
+        df['Mes_Num'] = df['Mês de Competência'].dt.month
+
+        # Criar versão formatada do mês para exibição
+        df['Mes_Ano'] = df['Mês de Competência'].dt.strftime('%m/%Y')
+
         
         return df
     except Exception as e:
@@ -83,12 +93,15 @@ def carregar_dados():
         return pd.DataFrame()
 
 # Função para aplicar filtros
-def aplicar_filtros(df, meses, geradores, usinas, clientes):
+def aplicar_filtros(df, anos, meses, geradores, usinas, clientes):
     """Aplica filtros combinados ao DataFrame"""
     df_filtrado = df.copy()
     
+    if anos and len(anos) > 0:
+        df_filtrado = df_filtrado[df_filtrado['Ano'].isin(anos)]
+
     if meses and len(meses) > 0:
-        df_filtrado = df_filtrado[df_filtrado['Mês de Competência'].isin(meses)]
+        df_filtrado = df_filtrado[df_filtrado['Mes_Ano'].isin(meses)]
     
     if geradores and len(geradores) > 0:
         df_filtrado = df_filtrado[df_filtrado['Gerador'].isin(geradores)]
@@ -121,8 +134,17 @@ with st.sidebar:
     st.markdown("## 🎛️ Filtros Interativos")
     st.markdown("---")
     
+    # Filtro de Ano
+    anos_disponiveis = sorted(df['Ano'].unique().tolist())
+    anos_selecionados = st.multiselect(
+    "📆 Ano",
+    options=anos_disponiveis,
+    default=anos_disponiveis,
+    help="Selecione um ou mais anos"
+)
+    
     # Filtro de Mês
-    meses_disponiveis = sorted(df['Mês de Competência'].unique().tolist())
+    meses_disponiveis = sorted(df['Mes_Ano'].dropna().unique().tolist())
     meses_selecionados = st.multiselect(
         "📅 Mês de Competência",
         options=meses_disponiveis,
@@ -167,13 +189,19 @@ with st.sidebar:
     st.markdown("### 📊 Informações do Dataset")
     st.info(f"""
     **Total de Registros:** {len(df):,}  
-    **Período:** {', '.join(meses_disponiveis)}  
+    **Período:** {min(anos_disponiveis)} - {max(anos_disponiveis)}  
     **Última Atualização:** {datetime.now().strftime('%d/%m/%Y %H:%M')}
     """)
 
 # Aplicar filtros
-df_filtrado = aplicar_filtros(df, meses_selecionados, geradores_selecionados, 
-                               usinas_selecionadas, clientes_selecionados)
+df_filtrado = aplicar_filtros(
+    df,
+    anos_selecionados,
+    meses_selecionados,
+    geradores_selecionados,
+    usinas_selecionadas,
+    clientes_selecionados
+)
 
 # Armazenar dados filtrados no session_state
 st.session_state['df_filtrado'] = df_filtrado
@@ -252,12 +280,12 @@ st.markdown("### 📈 Evolução do Faturamento Mensal")
 
 evolucao_mensal = (
     df_filtrado
-    .groupby('Mês de Competência', as_index=False)
+    .groupby(['Ano', 'Mes_Num', 'Mes_Ano'], as_index=False)
     .agg({
         'Valor a Pagar para Gerador (R$)': 'sum',
         'Valor da Gestão (R$)': 'sum'
     })
-    .sort_values('Mês de Competência')
+    .sort_values(['Ano', 'Mes_Num'])
 )
 
 # Garantia de índices corretos
@@ -280,7 +308,7 @@ fig_evolucao = go.Figure()
 
 # Faturamento Total (Área)
 fig_evolucao.add_trace(go.Scatter(
-    x=evolucao_mensal['Mês de Competência'],
+    x=evolucao_mensal['Mes_Ano'],
     y=evolucao_mensal['Valor a Pagar para Gerador (R$)'],
     mode='lines+markers',
     name='Faturamento Total',
@@ -292,7 +320,7 @@ fig_evolucao.add_trace(go.Scatter(
 
 # Receita de Gestão (Eixo secundário)
 fig_evolucao.add_trace(go.Scatter(
-    x=evolucao_mensal['Mês de Competência'],
+    x=evolucao_mensal['Mes_Ano'],
     y=evolucao_mensal['Valor da Gestão (R$)'],
     mode='lines+markers',
     name='Receita de Gestão',
@@ -325,14 +353,14 @@ fig_evolucao.update_layout(
 
 # Anotações
 fig_evolucao.add_annotation(
-    x=melhor_mes['Mês de Competência'],
+    x=melhor_mes['Mes_Ano'],
     y=melhor_mes['Valor a Pagar para Gerador (R$)'],
     text='📈 Melhor mês',
     showarrow=True
 )
 
 fig_evolucao.add_annotation(
-    x=pior_mes['Mês de Competência'],
+    x=pior_mes['Mes_Ano'],
     y=pior_mes['Valor a Pagar para Gerador (R$)'],
     text='📉 Pior mês',
     showarrow=True
