@@ -35,6 +35,13 @@ if "df_original" not in st.session_state:
 
 df = st.session_state["df_original"].copy()
 
+# ===============================
+# Criação da coluna Ano
+# ===============================
+df["Mês de Competência"] = df["Mês de Competência"].astype(str)
+
+df["Ano"] = df["Mês de Competência"].str[:4]
+
 # ======================================================
 # 2️⃣ Filtros independentes
 # ======================================================
@@ -42,7 +49,17 @@ with st.sidebar:
     st.markdown("## 🎛️ Filtros – Financeiro")
     st.markdown("---")
 
-    meses = sorted(df["Mês de Competência"].unique())
+    anos = sorted(df["Ano"].unique())
+    anos_sel = st.multiselect(
+        "📆 Ano",
+        anos,
+        default=anos,
+        key="financeiro_ano"
+    )
+
+    meses = meses = sorted(
+    df[df["Ano"].isin(anos_sel)]["Mês de Competência"].unique()
+)
     meses_sel = st.multiselect(
         "📅 Mês de Competência",
         meses,
@@ -72,6 +89,9 @@ with st.sidebar:
 # ======================================================
 # 3️⃣ Aplicação dos filtros
 # ======================================================
+if anos_sel:
+    df = df[df["Ano"].isin(anos_sel)]
+
 if meses_sel:
     df = df[df["Mês de Competência"].isin(meses_sel)]
 

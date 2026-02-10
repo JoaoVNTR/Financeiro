@@ -32,21 +32,40 @@ if 'df_original' not in st.session_state:
 
 df = st.session_state['df_original'].copy()
 
+# Garantia de colunas auxiliares
+if 'Ano' not in df.columns:
+    df['Ano'] = pd.to_datetime(df['Mês de Competência'], errors='coerce').dt.year
+    df['Mes_Num'] = pd.to_datetime(df['Mês de Competência'], errors='coerce').dt.month
+    df['Mes_Ano'] = pd.to_datetime(df['Mês de Competência'], errors='coerce').dt.strftime('%m/%Y')
+
 # ===============================
 # 2️⃣ Filtros da página (INDEPENDENTES)
 # ===============================
 with st.sidebar:
     st.markdown("## 🎛️ Filtros – Painel Executivo")
     st.markdown("---")
+    
+    anos = sorted(df['Ano'].dropna().unique())
+    anos_sel = st.multiselect(
+    "📆 Ano",
+    anos,
+    default=anos,
+    key="executivo_ano"
+)
+    meses = (
+    df[df['Ano'].isin(anos_sel)]
+    ['Mes_Ano']
+    .dropna()
+    .unique()
+)
 
-    meses = sorted(df['Mês de Competência'].unique())
     meses_sel = st.multiselect(
-        "📅 Mês de Competência",
-        meses,
-        default=meses,
-        key="executivo_mes"
-    )
-
+    "📅 Mês de Competência",
+    sorted(meses),
+    default=sorted(meses),
+    key="executivo_mes"
+)
+    
     geradores = sorted(df['Gerador'].unique())
     geradores_sel = st.multiselect(
         "🏭 Gerador",
@@ -70,8 +89,11 @@ with st.sidebar:
 # ===============================
 # 3️⃣ Aplicação dos filtros
 # ===============================
+if anos_sel:
+    df = df[df['Ano'].isin(anos_sel)]
+
 if meses_sel:
-    df = df[df['Mês de Competência'].isin(meses_sel)]
+    df = df[df['Mes_Ano'].isin(meses_sel)]
 
 if geradores_sel:
     df = df[df['Gerador'].isin(geradores_sel)]
@@ -117,22 +139,28 @@ col_l, col_r = st.columns(2)
 with col_l:
     st.markdown("#### 📈 Evolução Mensal")
 
-    evolucao = df.groupby('Mês de Competência').agg({
+    evolucao = (
+    df
+    .groupby(['Ano', 'Mes_Num', 'Mes_Ano'])
+    .agg({
         'Valor a Pagar para Gerador (R$)': 'sum',
         'Valor da Gestão (R$)': 'sum'
-    }).reset_index()
+    })
+    .reset_index()
+    .sort_values(['Ano', 'Mes_Num'])
+)   
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
     fig.add_bar(
-        x=evolucao['Mês de Competência'],
+        x=evolucao['Mes_Ano'],
         y=evolucao['Valor a Pagar para Gerador (R$)'],
         name="Faturamento",
         marker_color="#071D49"
     )
 
     fig.add_scatter(
-        x=evolucao['Mês de Competência'],
+        x=evolucao['Mes_Ano'],
         y=evolucao['Valor da Gestão (R$)'],
         name="Receita Gestão",
         secondary_y=True,
