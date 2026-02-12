@@ -33,10 +33,25 @@ if "df_original" not in st.session_state:
 df = st.session_state["df_original"].copy()
 
 # ===============================
-# Criação da coluna Ano
+# Tratamento de data
 # ===============================
-df["Mês de Competência"] = df["Mês de Competência"].astype(str)
-df["Ano"] = df["Mês de Competência"].str[:4]
+df["Mês de Competência"] = pd.to_datetime(
+    df["Mês de Competência"],
+    errors="coerce"
+)
+
+df["Ano"] = df["Mês de Competência"].dt.year
+df["Mes_Num"] = df["Mês de Competência"].dt.month
+
+meses_abrev = {
+    1: 'Jan', 2: 'Fev', 3: 'Mar', 4: 'Abr',
+    5: 'Mai', 6: 'Jun', 7: 'Jul', 8: 'Ago',
+    9: 'Set', 10: 'Out', 11: 'Nov', 12: 'Dez'
+}
+
+df["Mes_Ano"] = (
+    df["Mes_Num"].map(meses_abrev) + "/" + df["Ano"].astype(str)
+)
 
 # ======================================================
 # 2️⃣ Filtros independentes
@@ -53,9 +68,12 @@ with st.sidebar:
         key="relatorio_ano"
     )
 
-    meses = sorted(
-    df[df["Ano"].isin(anos_sel)]["Mês de Competência"].unique()
+    meses = (
+    df[df["Ano"].isin(anos_sel)]
+    .sort_values(["Ano", "Mes_Num"])["Mes_Ano"]
+    .unique()
 )
+
     meses_sel = st.multiselect(
         "📅 Mês de Competência",
         meses,
@@ -95,7 +113,7 @@ if anos_sel:
     df = df[df["Ano"].isin(anos_sel)]
 
 if meses_sel:
-    df = df[df["Mês de Competência"].isin(meses_sel)]
+    df = df[df["Mes_Ano"].isin(meses_sel)]
 
 if geradores_sel:
     df = df[df["Gerador"].isin(geradores_sel)]
@@ -209,14 +227,14 @@ elif nivel == "Por Cliente":
 
 else:  # Por Mês
     df_display = df.groupby(
-        ["Mês de Competência", "Gerador"]
+        ["Ano", "Mes_Num", "Mes_Ano", "Gerador"]
     ).agg({
         "Valor a Pagar para Gerador (R$)": "sum",
         "Valor da Gestão (R$)": "sum",
         "% Gestão": "mean",
         "Usina": "nunique",
         "Cliente Final": "nunique"
-    }).reset_index()
+    }).reset_index().sort_values(["Ano", "Mes_Num"])
 
 # ======================================================
 # 7️⃣ Ordenação

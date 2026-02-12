@@ -36,11 +36,23 @@ if "df_original" not in st.session_state:
 df = st.session_state["df_original"].copy()
 
 # ===============================
-# Criação da coluna Ano
+# Tratamento de data
 # ===============================
-df["Mês de Competência"] = df["Mês de Competência"].astype(str)
+df["Mês de Competência"] = pd.to_datetime(df["Mês de Competência"], errors="coerce")
 
-df["Ano"] = df["Mês de Competência"].str[:4]
+df["Ano"] = df["Mês de Competência"].dt.year
+df["Mes_Num"] = df["Mês de Competência"].dt.month
+
+meses_abrev = {
+    1: 'Jan', 2: 'Fev', 3: 'Mar', 4: 'Abr',
+    5: 'Mai', 6: 'Jun', 7: 'Jul', 8: 'Ago',
+    9: 'Set', 10: 'Out', 11: 'Nov', 12: 'Dez'
+}
+
+df["Mes_Ano"] = (
+    df["Mes_Num"].map(meses_abrev) + "/" + df["Ano"].astype(str)
+)
+
 
 # ======================================================
 # 2️⃣ Filtros independentes
@@ -57,9 +69,12 @@ with st.sidebar:
         key="financeiro_ano"
     )
 
-    meses = meses = sorted(
-    df[df["Ano"].isin(anos_sel)]["Mês de Competência"].unique()
+    meses = sorted(
+    df[df["Ano"].isin(anos_sel)]
+    .sort_values(["Ano", "Mes_Num"])["Mes_Ano"]
+    .unique()
 )
+
     meses_sel = st.multiselect(
         "📅 Mês de Competência",
         meses,
@@ -93,7 +108,7 @@ if anos_sel:
     df = df[df["Ano"].isin(anos_sel)]
 
 if meses_sel:
-    df = df[df["Mês de Competência"].isin(meses_sel)]
+    df = df[df["Mes_Ano"].isin(meses_sel)]
 
 if geradores_sel:
     df = df[df["Gerador"].isin(geradores_sel)]
@@ -211,10 +226,10 @@ st.markdown("---")
 # ======================================================
 st.markdown("### 📅 Evolução Financeira Mensal")
 
-evolucao = df.groupby("Mês de Competência").agg({
+evolucao = df.groupby(["Ano", "Mes_Num", "Mes_Ano"]).agg({
     "Valor a Pagar para Gerador (R$)": "sum",
     "Valor da Gestão (R$)": "sum"
-}).reset_index()
+}).reset_index().sort_values(["Ano", "Mes_Num"])
 
 evolucao["Margem %"] = (
     evolucao["Valor da Gestão (R$)"] /
@@ -228,19 +243,19 @@ fig_evo = make_subplots(
 )
 
 fig_evo.add_bar(
-    x=evolucao["Mês de Competência"],
+    x=evolucao["Mes_Ano"],
     y=evolucao["Valor a Pagar para Gerador (R$)"],
     row=1, col=1,
     name="Faturamento"
 )
 fig_evo.add_bar(
-    x=evolucao["Mês de Competência"],
+    x=evolucao["Mes_Ano"],
     y=evolucao["Valor da Gestão (R$)"],
     row=1, col=1,
     name="Receita Gestão"
 )
 fig_evo.add_scatter(
-    x=evolucao["Mês de Competência"],
+    x=evolucao["Mes_Ano"],
     y=evolucao["Margem %"],
     row=2, col=1,
     mode="lines+markers",

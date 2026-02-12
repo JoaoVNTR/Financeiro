@@ -35,6 +35,27 @@ df = df.rename(columns={
 })
 
 # ==============================
+# Tratamento de Data
+# ==============================
+df["Mês de Competência"] = pd.to_datetime(
+    df["Mês de Competência"],
+    errors="coerce"
+)
+
+df["Ano"] = df["Mês de Competência"].dt.year
+df["Mes_Num"] = df["Mês de Competência"].dt.month
+
+meses_abrev = {
+    1: 'Jan', 2: 'Fev', 3: 'Mar', 4: 'Abr',
+    5: 'Mai', 6: 'Jun', 7: 'Jul', 8: 'Ago',
+    9: 'Set', 10: 'Out', 11: 'Nov', 12: 'Dez'
+}
+
+df["Mes_Ano"] = (
+    df["Mes_Num"].map(meses_abrev) + "/" + df["Ano"].astype(str)
+)
+
+# ==============================
 # Configuração de Percentuais
 # ==============================
 st.sidebar.header("Configurações de Percentuais")
@@ -52,13 +73,17 @@ df["Total a Pagar"] = df["Faturamento do Cliente Final"].fillna(0) - df["Descont
 # Filtros
 # ==============================
 st.sidebar.header("Filtros")
-filtro_mes = st.sidebar.multiselect("Mês de Competência", df["Mês de Competência"].dropna().unique())
+filtro_mes = st.sidebar.multiselect(
+    "Mês de Competência",
+    df.sort_values(["Ano", "Mes_Num"])["Mes_Ano"].dropna().unique()
+)
+
 filtro_usina = st.sidebar.multiselect("Usina", df["Usina"].dropna().unique())
 filtro_cliente = st.sidebar.multiselect("Cliente Final", df["Cliente Final"].dropna().unique())
 
 df_filtrado = df.copy()
 if filtro_mes:
-    df_filtrado = df_filtrado[df_filtrado["Mês de Competência"].isin(filtro_mes)]
+    df_filtrado = df_filtrado[df_filtrado["Mes_Ano"].isin(filtro_mes)]
 if filtro_usina:
     df_filtrado = df_filtrado[df_filtrado["Usina"].isin(filtro_usina)]
 if filtro_cliente:
@@ -71,8 +96,13 @@ def format_currency(value):
     return f"R$ {value:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 df_display = df_filtrado.copy()
+
+# Substituir exibição da data pelo formato Jan/2026
+df_display["Mês de Competência"] = df_display["Mes_Ano"]
+
 for col in ["Faturamento do Cliente Final", "Desconto de Gestão", "Desconto NFS-e", "Total a Pagar"]:
     df_display[col] = df_display[col].apply(format_currency)
+
 
 # ==============================
 # Exibição da Tabela
