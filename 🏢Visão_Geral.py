@@ -3,6 +3,9 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
+import locale
+locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
+
 
 def real_br(valor):
     try:
@@ -84,7 +87,8 @@ def carregar_dados():
         df['Mes_Num'] = df['Mês de Competência'].dt.month
 
         # Criar versão formatada do mês para exibição
-        df['Mes_Ano'] = df['Mês de Competência'].dt.strftime('%m/%Y')
+        df['Mes_Ano'] = df['Mês de Competência'].dt.strftime('%b/%Y')
+
 
         
         return df
