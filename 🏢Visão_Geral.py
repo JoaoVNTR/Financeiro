@@ -3,8 +3,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
-import locale
-locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
 
 
 def real_br(valor):
@@ -65,33 +63,43 @@ def carregar_dados():
     """Carrega os dados do Excel"""
     try:
         df = pd.read_excel('fat.xlsx', sheet_name='FATURAMENTO Á RECEBER')
-        
-        # Limpeza e preparação dos dados
+
+        # Limpeza
         df.columns = df.columns.str.strip()
-        
-        # Converter colunas numéricas
-        df['Valor a Pagar para Gerador (R$)'] = pd.to_numeric(df['Valor a Pagar para Gerador (R$)'], errors='coerce')
+
+        # Conversões numéricas
+        df['Valor a Pagar para Gerador (R$)'] = pd.to_numeric(
+            df['Valor a Pagar para Gerador (R$)'], errors='coerce'
+        )
         df['% Gestão'] = pd.to_numeric(df['% Gestão'], errors='coerce')
-        df['Valor da Gestão (R$)'] = pd.to_numeric(df['Valor da Gestão (R$)'], errors='coerce')
-        
-        # Preencher valores nulos
+        df['Valor da Gestão (R$)'] = pd.to_numeric(
+            df['Valor da Gestão (R$)'], errors='coerce'
+        )
+
         df.fillna(0, inplace=True)
-        
-        # Converter Mês de Competência para datetime
+
+        # Converter data corretamente
         df['Mês de Competência'] = pd.to_datetime(
-        df['Mês de Competência'],
-        errors='coerce'
-)
-        # Criar colunas auxiliares
+            df['Mês de Competência'],
+            errors='coerce'
+        )
+
         df['Ano'] = df['Mês de Competência'].dt.year
         df['Mes_Num'] = df['Mês de Competência'].dt.month
 
-        # Criar versão formatada do mês para exibição
-        df['Mes_Ano'] = df['Mês de Competência'].dt.strftime('%b/%Y')
+        # 🔥 Mês abreviado padrão
+        meses_abrev = {
+            1: 'Jan', 2: 'Fev', 3: 'Mar', 4: 'Abr',
+            5: 'Mai', 6: 'Jun', 7: 'Jul', 8: 'Ago',
+            9: 'Set', 10: 'Out', 11: 'Nov', 12: 'Dez'
+        }
 
+        df['Mes_Ano'] = (
+            df['Mes_Num'].map(meses_abrev) + '/' + df['Ano'].astype(str)
+        )
 
-        
         return df
+
     except Exception as e:
         st.error(f"Erro ao carregar dados: {str(e)}")
         return pd.DataFrame()
