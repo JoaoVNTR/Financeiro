@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
+from PIL import Image
 
 
 def real_br(valor):
@@ -138,14 +139,14 @@ if 'df_original' not in st.session_state:
     st.session_state['df_original'] = df
 
 # Título Principal
-st.title("⚡ Sunteb | Dashboard de Faturamento")
+st.title("⚡ Sunteb | Faturamento")
 st.markdown("---")
 
 # Sidebar com filtros
 with st.sidebar:
     st.markdown("## 🎛️ Filtros Interativos")
     st.markdown("---")
-    
+
     # Filtro de Ano
     anos_disponiveis = sorted(df['Ano'].unique().tolist())
     anos_selecionados = st.multiselect(
@@ -453,6 +454,6 @@ st.markdown("---")
 st.markdown("""
 <div style='text-align: center; color: #7f8c8d; padding: 20px;'>
     <p><b>Dashboard de Faturamento - Geração Distribuída</b></p>
-    <p>Desenvolvido com Streamlit & Plotly | © 2024</p>
+    <p>Desenvolvido com Streamlit & Plotly | © 2026</p>
 </div>
 """, unsafe_allow_html=True)
